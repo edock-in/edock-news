@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "story": "a1b2c3d4-0000-4000-8000-000000000004",
+  "slug": "a-story-edock-hid",
+  "version": 1,
+  "title": "A story Edock hid",
+  "subtitle": null,
+  "content_html": "<p>It broke a rule.</p>",
+  "cover_image": null,
+  "tags": [],
+  "word_count": 120,
+  "author": {
+    "name": "Neha Kapoor",
+    "handle": "neha",
+    "verified": true,
+    "team": false
+  },
+  "first_published_at": "2026-10-09T07:00:00.000Z",
+  "saved_at": "2026-10-09T07:00:00.000Z",
+  "links": {
+    "news": "https://news.edock.io/p/a-story-edock-hid/",
+    "blog": "https://blogs.edock.io/p/a-story-edock-hid"
+  },
+  "media": {},
+  "licence": "CC-BY-4.0"
+}

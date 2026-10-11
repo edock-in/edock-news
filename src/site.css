@@ -1,0 +1,367 @@
+/*
+ * Edock News. One stylesheet, served from this site; no inline styles (the
+ * page policy forbids them) and no outside fonts.
+ *
+ * It looks like Edock Blogs (blogs.edock.io), because a News story is a
+ * blog the author marked as News: the same paper, ink, hairlines and
+ * vermilion, Oswald headlines and Nunito Sans reading text, the same white
+ * header with the red wordmark, round avatars, pills and chips.
+ */
+
+@font-face {
+  font-family: "Nunito Sans";
+  src: url("/fonts/nunito-sans-latin.woff2") format("woff2");
+  font-weight: 200 1000;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+20B9, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Nunito Sans";
+  src: url("/fonts/nunito-sans-latin-ext.woff2") format("woff2");
+  font-weight: 200 1000;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Nunito Sans";
+  src: url("/fonts/nunito-sans-italic-latin.woff2") format("woff2");
+  font-weight: 200 1000;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Oswald";
+  src: url("/fonts/oswald-latin.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --vermilion: #FF3D1F;
+  --vermilion-hover: #D9341A;
+  --paper: #FAF9F7;
+  --surface: #FFFFFF;
+  --ink: #14120F;
+  --muted: #6B6862;
+  --hairline: #E8E4DE;
+  --chip: #F4F2EE;
+  --avatar-bg: #DCFCE7;
+  --avatar-ink: #15803D;
+  --ins-bg: #DCFCE7;
+  --ins-ink: #14532D;
+  --del-bg: #FEE4E0;
+  --del-ink: #9E2B26;
+  --gutter: 20px;
+  --read: 616px;
+  --wide: 1180px;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #121110;
+    --surface: #1A1917;
+    --ink: #F2EFEA;
+    --muted: #A39E96;
+    --hairline: #2C2A27;
+    --chip: #23211F;
+    --avatar-bg: #14361F;
+    --avatar-ink: #86EFAC;
+    --ins-bg: #14361F;
+    --ins-ink: #A7F3C0;
+    --del-bg: #3E1A16;
+    --del-ink: #FFAA9C;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Nunito Sans", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+a { color: var(--vermilion); text-underline-offset: 0.16em; }
+a:hover { color: var(--vermilion-hover); }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--vermilion);
+  outline-offset: 3px;
+}
+
+img { max-width: 100%; height: auto; }
+code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+h1, h2, h3 {
+  font-family: "Oswald", "Nunito Sans", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.08;
+  color: var(--ink);
+}
+
+.meta { margin: 0; color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; }
+.dot { color: var(--muted); }
+.fine { font-size: 13px; color: var(--muted); }
+.lede { font-size: 18px; color: var(--muted); margin: 0 0 18px; }
+.kicker { margin: 0 0 10px; font-size: 14px; font-weight: 600; }
+.kicker a { color: var(--muted); text-decoration: none; }
+.kicker a:hover { color: var(--ink); }
+.text-link { font-weight: 700; text-decoration: none; }
+
+/* ─── Header, as on blogs.edock.io ─────────────────────────────────────── */
+
+.masthead { background: var(--surface); border-bottom: 1px solid var(--hairline); }
+.masthead-inner {
+  max-width: var(--wide); margin: 0 auto; min-height: 60px;
+  padding: 8px var(--gutter);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.brand { display: inline-flex; align-items: center; color: var(--vermilion); text-decoration: none; }
+.brand:hover { color: var(--vermilion); }
+.wordmark { width: 86px; height: 20px; display: block; }
+.brand-label {
+  font-family: "Oswald", "Nunito Sans", system-ui, sans-serif;
+  font-weight: 600; font-size: 19px; line-height: 19px; letter-spacing: -0.01em;
+  color: var(--ink); margin-left: 10px; padding-left: 10px; border-left: 1px solid var(--hairline);
+}
+.nav { display: flex; align-items: center; gap: 10px; }
+.nav-link { color: var(--ink); font-weight: 600; font-size: 15px; text-decoration: none; padding: 0 6px; }
+.nav-link:hover { color: var(--vermilion); }
+
+.pill {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--vermilion);
+  background: var(--vermilion); color: #FFFFFF;
+  font: inherit; font-size: 15px; font-weight: 700; line-height: 24px;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+}
+.pill:hover { background: var(--vermilion-hover); border-color: var(--vermilion-hover); color: #FFFFFF; }
+.pill-outline { background: transparent; color: var(--ink); border-color: var(--hairline); font-weight: 600; }
+.pill-outline:hover { background: var(--chip); color: var(--ink); border-color: var(--hairline); }
+.pill svg { width: 16px; height: 16px; }
+
+.chip {
+  display: inline-flex; align-items: center; padding: 0 10px; border-radius: 999px;
+  background: var(--chip); border: 1px solid var(--hairline);
+  color: var(--ink); font-size: 13px; font-weight: 500; line-height: 22px;
+}
+.meta .chip { margin-left: 4px; }
+
+@media (max-width: 640px) {
+  .nav-link { display: none; }
+  .pill-outline .pill-text { display: none; }
+  .nav .pill-outline { width: 38px; padding: 0; }
+}
+
+/* ─── Page frames ──────────────────────────────────────────────────────── */
+
+.page { max-width: var(--wide); margin: 0 auto; padding: 24px var(--gutter) 64px; }
+.page > .story, .page > .history, .page > .report, .page > .notice, .page > .prose {
+  max-width: var(--read); margin: 0 auto;
+}
+
+/* ─── Home: a list like the blogs home, with a side column ─────────────── */
+
+.home-grid { display: grid; gap: 40px; grid-template-columns: 1fr; }
+@media (min-width: 960px) {
+  .home-grid { grid-template-columns: minmax(0, 1fr) 300px; gap: 56px; }
+}
+
+.tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--hairline); margin-bottom: 4px; }
+.tab {
+  padding: 10px 14px; margin-bottom: -1px; color: var(--muted); font-size: 15px; font-weight: 600;
+  text-decoration: none; border-bottom: 2px solid transparent;
+}
+.tab-on { color: var(--ink); border-bottom-color: var(--vermilion); }
+
+.row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start;
+  padding: 22px 0; border-bottom: 1px solid var(--hairline);
+}
+.row-author { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+.row-title { font-size: 20px; margin: 0 0 6px; }
+.row-title a { color: var(--ink); text-decoration: none; }
+.row-title a:hover { color: var(--vermilion); }
+.row-dek { display: none; margin: 0 0 8px; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.row-cover { display: block; width: 88px; height: 88px; border-radius: 10px; overflow: hidden; background: var(--chip); }
+.row-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 640px) {
+  .row-title { font-size: 22px; }
+  .row-dek { display: block; }
+  .row-cover { width: 160px; height: 107px; }
+}
+
+.avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  border-radius: 50%; background: var(--avatar-bg); color: var(--avatar-ink); font-weight: 700;
+}
+.avatar-small { width: 28px; height: 28px; font-size: 13px; }
+.avatar-large { width: 44px; height: 44px; font-size: 18px; }
+
+.author { display: inline-flex; align-items: center; gap: 4px; }
+.author a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.author a:hover { color: var(--vermilion); }
+.tick { width: 15px; height: 15px; }
+.team {
+  font-size: 11px; font-weight: 700; color: var(--muted); background: var(--chip);
+  border: 1px solid var(--hairline); border-radius: 999px; padding: 0 8px; line-height: 18px; margin-left: 2px;
+}
+
+.side { display: grid; gap: 28px; align-content: start; }
+.side-box h3 { font-size: 15px; letter-spacing: 0.04em; margin: 0 0 8px; }
+.side-box p { margin: 0 0 12px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+
+.empty { padding: 32px 0; }
+.empty h2 { font-size: 28px; margin: 0 0 10px; }
+.empty p { color: var(--muted); max-width: 32em; }
+
+/* ─── A story, as a blogs.edock.io story reads ─────────────────────────── */
+
+.story-head { margin-bottom: 24px; }
+.story h1 { font-size: clamp(32px, 6.4vw, 46px); margin: 0 0 12px; }
+.dek { font-size: clamp(18px, 2.6vw, 20px); line-height: 1.45; color: var(--muted); margin: 0 0 22px; }
+.story-author { display: flex; align-items: center; gap: 12px; }
+.author-line { margin: 0; font-size: 15px; }
+.record-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px;
+  margin-top: 20px; padding: 10px 0; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline);
+  font-size: 14px;
+}
+.record-bar a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.record-bar a:hover { color: var(--vermilion); }
+.record-when { color: var(--muted); }
+.seal {
+  display: inline-flex; align-items: center; padding: 0 10px; border-radius: 999px; line-height: 24px;
+  background: var(--chip); border: 1px solid var(--hairline); font-weight: 700; font-size: 13px;
+}
+.cover { margin: 0 0 28px; }
+.cover img { display: block; width: 100%; border-radius: 16px; }
+
+.story-body { font-size: 19px; line-height: 1.75; overflow-wrap: anywhere; }
+.story-body p { margin: 0 0 1.1em; }
+.story-body h1, .story-body h2 { font-size: 26px; margin: 1.6em 0 0.5em; }
+.story-body h3, .story-body h4, .story-body h5, .story-body h6 { font-size: 21px; margin: 1.4em 0 0.4em; }
+.story-body a { color: var(--vermilion); }
+.story-body strong, .story-body b { font-weight: 700; }
+.story-body ul, .story-body ol { padding-left: 1.3em; margin: 0 0 1.1em; }
+.story-body li { margin: 0 0 0.35em; }
+.story-body blockquote {
+  margin: 1.4em 0; padding: 2px 0 2px 20px; border-left: 3px solid var(--vermilion);
+  color: var(--muted); font-style: italic;
+}
+.story-body img { display: block; margin: 1.4em 0 0.5em; border-radius: 16px; }
+.story-body figure { margin: 1.4em 0; }
+.story-body figcaption { font-size: 14px; color: var(--muted); }
+.story-body pre { white-space: pre-wrap; background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 12px 14px; }
+.story-body table { border-collapse: collapse; width: 100%; font-size: 16px; display: block; overflow-x: auto; }
+.story-body th, .story-body td { border-bottom: 1px solid var(--hairline); padding: 8px; text-align: left; }
+.story-body hr { border: 0; border-top: 1px solid var(--hairline); margin: 2em 0; }
+.story-body .embed a {
+  display: inline-flex; align-items: center; min-height: 38px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid var(--hairline); background: var(--surface); color: var(--ink);
+  font-size: 15px; font-weight: 700; text-decoration: none;
+}
+.story-body .embed a:hover { background: var(--chip); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 0; }
+.tags .chip { font-size: 14px; padding: 2px 14px; }
+.story-actions {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 28px 0 14px; padding-top: 24px; border-top: 1px solid var(--hairline);
+}
+.licence { font-size: 13px; color: var(--muted); }
+
+/* ─── History and versions ─────────────────────────────────────────────── */
+
+.history h1, .report h1, .notice h1, .prose h1 { font-size: clamp(30px, 5.6vw, 40px); margin: 0 0 12px; }
+.history-list { list-style: none; padding: 0; margin: 24px 0 0; border-left: 2px solid var(--hairline); }
+.history-list li { position: relative; padding: 0 0 22px 22px; display: grid; gap: 2px; }
+.history-list li::before {
+  content: ""; position: absolute; left: -7px; top: 7px; width: 12px; height: 12px;
+  border-radius: 50%; background: var(--paper); border: 2px solid var(--vermilion);
+}
+.history-list li.history-event::before { border-color: var(--muted); }
+.history-list a strong { font-family: "Oswald", sans-serif; font-size: 19px; color: var(--ink); }
+.history-list .when { font-size: 13px; color: var(--muted); }
+.history-list .what { font-size: 15px; }
+.history-list .proof { font-size: 13px; color: var(--muted); }
+.history-event .what { color: var(--muted); }
+
+.version .sealed { margin: 0 0 6px; font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.version-nav { margin: 8px 0 24px; font-weight: 600; font-size: 15px; }
+.version-nav a { color: var(--ink); }
+.changes {
+  background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px;
+  padding: 4px 22px 12px; margin-bottom: 32px;
+}
+.changes h2 { font-size: 22px; margin: 20px 0 8px; }
+.legend { font-size: 13px; margin: 0 0 12px; display: flex; gap: 8px; }
+.change { font-size: 17px; line-height: 1.7; margin: 0 0 12px; }
+.change-same { color: var(--muted); }
+.change-title { font-weight: 700; }
+ins { background: var(--ins-bg); color: var(--ins-ink); text-decoration: none; border-radius: 4px; padding: 0 3px; }
+del { background: var(--del-bg); color: var(--del-ink); text-decoration: line-through; border-radius: 4px; padding: 0 3px; }
+.as-saved > h2 { font-family: "Nunito Sans", sans-serif; font-size: 13px; letter-spacing: 0.04em; color: var(--muted); font-weight: 700; margin: 0 0 10px; }
+.as-saved h1 { font-size: clamp(28px, 5vw, 38px); }
+.as-saved .meta { margin-bottom: 20px; font-size: 14px; }
+
+/* ─── Report form ──────────────────────────────────────────────────────── */
+
+.report-form fieldset { border: 0; margin: 0 0 20px; padding: 0; display: grid; gap: 8px; }
+.report-form legend, .report-form .field { font-weight: 700; margin-bottom: 8px; display: block; }
+.choice {
+  display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; font-size: 15px;
+}
+.choice:hover { border-color: var(--muted); }
+.choice input { accent-color: var(--vermilion); width: 18px; height: 18px; margin: 0; }
+textarea {
+  width: 100%; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--hairline); border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; resize: vertical;
+}
+.report-form .pill { min-height: 44px; padding: 0 22px; }
+/* The trap field: there for bots, never shown to people. */
+.trap { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+
+.notice { padding-top: 16px; }
+.notice .lede { color: var(--ink); }
+
+/* ─── About ────────────────────────────────────────────────────────────── */
+
+.prose { font-size: 18px; line-height: 1.7; }
+.prose h2 { font-size: 24px; margin: 1.6em 0 0.4em; }
+.prose .lede { font-size: 20px; line-height: 1.5; }
+.prose pre { background: var(--surface); border: 1px solid var(--hairline); border-radius: 12px; padding: 12px 14px; overflow-x: auto; font-size: 14px; }
+
+/* ─── Footer, as on blogs.edock.io ─────────────────────────────────────── */
+
+.footer { border-top: 1px solid var(--hairline); }
+.footer-inner {
+  max-width: var(--wide); margin: 0 auto; font-size: 13px; color: var(--muted);
+  padding: 22px var(--gutter) max(28px, env(safe-area-inset-bottom));
+}
+.footer-inner p { margin: 0 0 8px; }
+.footer a { color: var(--muted); text-decoration: none; }
+.footer a:hover { color: var(--ink); }
+.footer code { font-size: 12px; }
+
+@media (min-width: 640px) {
+  :root { --gutter: 32px; }
+}

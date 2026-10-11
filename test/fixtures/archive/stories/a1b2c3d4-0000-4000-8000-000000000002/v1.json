@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "story": "a1b2c3d4-0000-4000-8000-000000000002",
+  "slug": "rbi-raises-repo-rate-to-5-5",
+  "version": 1,
+  "title": "RBI raises the repo rate to 5.5%",
+  "subtitle": "The first rise since February 2023.",
+  "content_html": "<p>The Reserve Bank of India raised its key lending rate to 5.5% on 7 October.</p><p>Home and car loans are likely to cost more.</p>",
+  "cover_image": null,
+  "tags": [
+    "Economy",
+    "Banking"
+  ],
+  "word_count": 28,
+  "author": {
+    "name": "Ravi Menon",
+    "handle": "ravi",
+    "verified": true,
+    "team": true
+  },
+  "first_published_at": "2026-10-10T06:00:00.000Z",
+  "saved_at": "2026-10-10T06:00:00.000Z",
+  "links": {
+    "news": "https://news.edock.io/p/rbi-raises-repo-rate-to-5-5/",
+    "blog": "https://blogs.edock.io/p/rbi-raises-repo-rate-to-5-5"
+  },
+  "media": {},
+  "licence": "CC-BY-4.0"
+}

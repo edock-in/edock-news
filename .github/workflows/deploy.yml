@@ -1,0 +1,73 @@
+# Build news.edock.io from the public record and upload it.
+#
+# Runs when this repository's main branch moves (a release of the site code),
+# and when the record changes: edock-in/edock-news-archive calls this same
+# workflow on every push to its main. Either way the code comes from this
+# repository's main and the stories from the record's main.
+#
+# AWS access is by GitHub's OIDC token, with no stored key. The role it
+# assumes trusts only the main branch of these two repositories, and may only
+# write to the edock-news bucket and refresh its CloudFront distribution.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: news-deploy
+  cancel-in-progress: false
+
+env:
+  ROLE: arn:aws:iam::974213421208:role/edock-news-deploy
+  BUCKET: edock-news
+  DISTRIBUTION: ES6H1KS0YBZJ9
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: edock-in/edock-news
+          ref: main
+          path: site
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: edock-in/edock-news-archive
+          ref: main
+          path: archive
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - name: Build
+        working-directory: site
+        run: |
+          npm ci
+          node src/build.mjs --archive ../archive --out ../out
+          node scripts/check-pages.mjs ../out
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ env.ROLE }}
+          aws-region: ap-south-1
+      - name: Upload
+        run: |
+          # Fonts, the stylesheet and pictures are named by their contents or
+          # never change, so browsers may keep them for a year. Pages for five
+          # minutes, so a new story or a takedown shows quickly.
+          aws s3 sync out "s3://$BUCKET" --delete --only-show-errors \
+            --exclude "*" --include "assets/*" --include "fonts/*" --include "media/*" \
+            --cache-control "public, max-age=31536000, immutable"
+          aws s3 sync out "s3://$BUCKET" --delete --only-show-errors \
+            --exclude "assets/*" --exclude "fonts/*" --exclude "media/*" \
+            --cache-control "public, max-age=300"
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION" --paths "/*" --query 'Invalidation.Id' --output text

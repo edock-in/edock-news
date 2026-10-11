@@ -1,0 +1,21 @@
+{
+  "name": "edock-news",
+  "version": "1.0.0",
+  "description": "news.edock.io, built from Edock's public news archive. No scripts on any page.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node src/build.mjs --archive ../edock-news-archive --out dist",
+    "build:sample": "node src/build.mjs --archive test/fixtures/archive --out dist",
+    "serve": "node src/serve.mjs dist 4173",
+    "test": "node --test --test-concurrency=2 --experimental-test-coverage --test-coverage-include='src/**' --test-coverage-include='scripts/**' --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info 'test/**/*.test.mjs'",
+    "check": "node scripts/check-pages.mjs dist"
+  },
+  "dependencies": {
+    "xss": "1.0.15"
+  }
+}
