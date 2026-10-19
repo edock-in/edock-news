@@ -1,8 +1,9 @@
 /**
  * Check a built site keeps its promises before it goes anywhere:
- * no page runs a script, no page loads anything from another address, and
- * no page carries an inline style or event handler. CI runs this on every
- * pull request and the deploy runs it again on what it is about to upload.
+ * no page runs a script but Clarity's loader, no page loads anything from
+ * another address, and no page carries an inline style or event handler.
+ * CI runs this on every pull request and the deploy runs it again on what it
+ * is about to upload.
  *
  *   node scripts/check-pages.mjs dist
  */
@@ -21,11 +22,14 @@ async function htmlFiles(dir) {
   return found;
 }
 
+/** The one script a page may run: the site's own copy of Clarity's loader. */
+const CLARITY_TAG = /^<script src="\/clarity\.js" async><\/script>$/;
+
 /** Everything wrong with one page, as sentences. */
 export function problemsIn(html) {
   const problems = [];
-  for (const match of html.matchAll(/<script\b([^>]*)>/gi)) {
-    if (!/\btype\s*=\s*["']application\/ld\+json["']/i.test(match[1])) {
+  for (const match of html.matchAll(/<script\b([^>]*)>(?:<\/script>)?/gi)) {
+    if (!/\btype\s*=\s*["']application\/ld\+json["']/i.test(match[1]) && !CLARITY_TAG.test(match[0])) {
       problems.push('runs a script');
     }
   }
@@ -62,6 +66,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.error(`These pages break the site's rules:\n${failures.map((f) => `  ${f}`).join('\n')}`);
     process.exit(1);
   }
-  console.log('Every page: no scripts, nothing loaded from elsewhere.');
+  console.log('Every page: no scripts but Clarity, nothing loaded from elsewhere.');
 }
 /* node:coverage enable */

@@ -11,10 +11,12 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CLARITY_SOURCES } from './render.mjs';
 
 export const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
   '.xml': 'application/xml; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
@@ -29,7 +31,7 @@ export const TYPES = {
 /** The headers the live site's CDN adds to every answer. */
 export function securityHeaders(api = 'https://api.edock.io') {
   return {
-    'Content-Security-Policy': `default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; form-action 'self' ${new URL(api).origin}; base-uri 'none'; frame-ancestors 'none'`,
+    'Content-Security-Policy': `default-src 'none'; script-src 'self' ${CLARITY_SOURCES.script}; connect-src ${CLARITY_SOURCES.connect}; img-src 'self' ${CLARITY_SOURCES.img}; style-src 'self'; font-src 'self'; form-action 'self' ${new URL(api).origin}; base-uri 'none'; frame-ancestors 'none'`,
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'strict-origin-when-cross-origin',

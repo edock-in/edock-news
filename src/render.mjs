@@ -1,8 +1,10 @@
 /**
  * Every page of news.edock.io, as plain HTML strings.
  *
- * Pages carry no scripts: the only thing a reader sends anywhere is the
- * Report form, a plain form post to the Edock API. Styles come from one
+ * The one script on any page is Microsoft Clarity (/clarity.js), which
+ * measures how pages are read; the page's policy lets it reach clarity.ms and
+ * nowhere else. Apart from Clarity, the only thing a reader sends anywhere is
+ * the Report form, a plain form post to the Edock API. Styles come from one
  * stylesheet on this site, fonts from this site, pictures from this site's
  * copy of the archive. The policy below says so to the browser too, in the
  * page itself as well as in the server's headers.
@@ -32,11 +34,23 @@ export const momentOf = (iso) => `${dayOf(iso)}, ${timeOf(iso)} IST`;
 
 export const readingMinutes = (words) => Math.max(1, Math.round((words || 0) / 200));
 
-/** The page's own rules for the browser: nothing from anywhere else, no scripts. */
+/** Where Clarity loads its code from and sends what it measures (Microsoft's list). */
+export const CLARITY_SOURCES = {
+  script: 'https://www.clarity.ms https://*.clarity.ms',
+  connect: 'https://*.clarity.ms',
+  img: 'https://*.clarity.ms https://c.bing.com',
+};
+
+/** The tag every page carries: the site's own copy of Clarity's loader. */
+export const CLARITY_TAG = '<script src="/clarity.js" async></script>';
+
+/** The page's own rules for the browser: nothing from anywhere else but Clarity. */
 export function contentSecurityPolicy(config) {
   return [
     "default-src 'none'",
-    "img-src 'self'",
+    `script-src 'self' ${CLARITY_SOURCES.script}`,
+    `connect-src ${CLARITY_SOURCES.connect}`,
+    `img-src 'self' ${CLARITY_SOURCES.img}`,
     "style-src 'self'",
     "font-src 'self'",
     `form-action 'self' ${new URL(config.api).origin}`,
@@ -75,6 +89,7 @@ ${page.noindex ? '<meta name="robots" content="noindex">\n' : '<meta name="robot
 <link rel="apple-touch-icon" href="/favicon.png">
 <link rel="alternate" type="application/rss+xml" title="Edock News" href="/feed.xml">
 <link rel="stylesheet" href="${escapeHtml(config.cssPath)}">
+${CLARITY_TAG}
 <meta property="og:site_name" content="Edock News">
 <meta property="og:type" content="${page.article ? 'article' : 'website'}">
 <meta property="og:url" content="${escapeHtml(canonical)}">
@@ -429,7 +444,7 @@ node scripts/verify.mjs</code></pre>
   <p>An author can take their story off News, and Edock can hide a story that breaks the law or Edock's rules. Either way it leaves this site, but the public record keeps it, with a note saying who took it down and why. Nothing disappears without a trace.</p>
 
   <h2>Open source</h2>
-  <p>The code that builds this site is <a href="${config.siteRepoUrl}">open source</a> under the MIT licence, and anyone can suggest changes. Nothing goes live until the Edock team has reviewed and merged it. The site runs no scripts and loads nothing from anywhere else.</p>
+  <p>The code that builds this site is <a href="${config.siteRepoUrl}">open source</a> under the MIT licence, and anyone can suggest changes. Nothing goes live until the Edock team has reviewed and merged it. The only script the site runs is Microsoft Clarity, which shows Edock how pages are read; apart from that it loads nothing from anywhere else.</p>
 
   <h2>Licences</h2>
   <p>Stories are shared under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>: you may republish them if you credit the author and link back. The site's code is MIT. The Edock name and logo are Edock's own.</p>

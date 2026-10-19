@@ -33,8 +33,17 @@ describe('building the site from the record', () => {
     assert.equal((await readdir(path.join(out, 'assets'))).filter((f) => /^site\.[0-9a-f]{10}\.css$/.test(f)).length, 1);
   });
 
-  it('keeps every promise: no scripts, nothing from elsewhere, a policy on every page', async () => {
+  it('keeps every promise: no scripts but Clarity, nothing from elsewhere, a policy on every page', async () => {
     assert.deepEqual(await checkSite(out), []);
+  });
+
+  it('puts Clarity on every page, from the site’s own copy of its loader', async () => {
+    for (const file of ['index.html', 'about/index.html', `p/${JIO}/index.html`]) {
+      assert.ok((await page(file)).includes('<script src="/clarity.js" async></script>'), file);
+    }
+    const loader = await readFile(path.join(out, 'clarity.js'), 'utf8');
+    assert.match(loader, /https:\/\/www\.clarity\.ms\/tag\//);
+    assert.match(loader, /"yzygnbt8el"/);
   });
 
   it('lists live stories newest first on the home page, and nothing that was taken down', async () => {
@@ -181,18 +190,18 @@ describe('dates and rules', () => {
     assert.equal(readingMinutes(1000), 5);
   });
 
-  it('allows only this site, and posting to the API', () => {
+  it('allows only this site, Clarity, and posting to the API', () => {
     assert.equal(
       contentSecurityPolicy({ api: 'https://api.edock.io/x' }),
-      "default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; form-action 'self' https://api.edock.io; base-uri 'none'",
+      "default-src 'none'; script-src 'self' https://www.clarity.ms https://*.clarity.ms; connect-src https://*.clarity.ms; img-src 'self' https://*.clarity.ms https://c.bing.com; style-src 'self'; font-src 'self'; form-action 'self' https://api.edock.io; base-uri 'none'",
     );
   });
 });
 
 describe('the page checker', () => {
   const ok = '<meta http-equiv="Content-Security-Policy" content="x">';
-  it('passes a clean page and its Article data', () => {
-    assert.deepEqual(problemsIn(`${ok}<script type="application/ld+json">{}</script><link rel="stylesheet" href="/a.css"><link rel="canonical" href="https://news.edock.io/"><img src="/media/a.jpg">`), []);
+  it('passes a clean page, its Article data and the Clarity tag', () => {
+    assert.deepEqual(problemsIn(`${ok}<script type="application/ld+json">{}</script><script src="/clarity.js" async></script><link rel="stylesheet" href="/a.css"><link rel="canonical" href="https://news.edock.io/"><img src="/media/a.jpg">`), []);
   });
 
   it('catches every way a page could break its promise', () => {
@@ -214,6 +223,17 @@ describe('the page checker', () => {
       'loads https://fonts.googleapis.com/css from elsewhere',
       'has no page policy',
     ]);
+  });
+
+  it('lets no other script through, however close to the Clarity tag it looks', () => {
+    for (const tag of [
+      '<script src="/other.js" async></script>',
+      '<script src="https://x.test/clarity.js" async></script>',
+      '<script src="/clarity.js"></script>',
+      '<script src="/clarity.js" async>x()</script>',
+    ]) {
+      assert.deepEqual(problemsIn(`${ok}${tag}`), ['runs a script'], tag);
+    }
   });
 
   it('names each bad page in a site', async () => {

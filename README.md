@@ -20,10 +20,14 @@ only thing it reads is the public record.
 
 ## Promises the code keeps
 
-- **No scripts on any page.** Not ours, not anyone else's. Pages also carry
-  a policy telling the browser to refuse scripts.
-- **Nothing loaded from elsewhere.** Fonts, styles and pictures all come from
-  news.edock.io itself. Pictures are the copies kept in the public record.
+- **No scripts on any page except Microsoft Clarity**, which measures how
+  pages are read (scrolls, clicks, where people stop). Nothing else, ours or
+  anyone else's. Pages also carry a policy telling the browser to refuse every
+  other script.
+- **Nothing loaded from elsewhere but Clarity.** Fonts, styles and pictures
+  all come from news.edock.io itself. Pictures are the copies kept in the
+  public record. Clarity's loader is a file on this site, and the page policy
+  lets it reach clarity.ms and nowhere else.
 - **No building from a broken record.** If any link in the chain does not
   match, the build stops and the site stays as it was.
 - **Taken-down stories leave a note.** A withdrawn or hidden story is replaced
@@ -60,11 +64,12 @@ npm run build
 | `src/archive.mjs` | Reads the record and checks every link in the chain |
 | `src/sanitize.mjs` | Cleans a story's HTML: no scripts, only the record's own pictures |
 | `src/diff.mjs` | What changed between two versions, word by word |
-| `src/render.mjs` | Every page, as HTML |
+| `src/render.mjs` | Every page, as HTML, and the page policy |
 | `src/feeds.mjs` | RSS, sitemaps, robots.txt |
 | `src/build.mjs` | Puts it all together |
 | `src/serve.mjs` | A local server with the live site's headers |
 | `src/site.css` | The one stylesheet |
+| `static/clarity.js` | Clarity's loader, the one script on any page |
 | `scripts/check-pages.mjs` | Fails a build whose pages break the promises above |
 
 ## Contributing

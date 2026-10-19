@@ -19,6 +19,7 @@ describe('serving a build locally', () => {
     await writeFile(path.join(root, 'p', 'story', 'index.html'), 'story');
     await writeFile(path.join(root, 'feed.xml'), '<rss/>');
     await writeFile(path.join(root, 'odd.bin'), 'x');
+    await writeFile(path.join(root, 'clarity.js'), '');
     server = createServer(handler(root, 'http://localhost:3077'));
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
     base = `http://127.0.0.1:${server.address().port}`;
@@ -31,6 +32,7 @@ describe('serving a build locally', () => {
     assert.equal(await res.text(), 'story');
     assert.equal(res.headers.get('content-type'), 'text/html; charset=utf-8');
     assert.match(res.headers.get('content-security-policy'), /form-action 'self' http:\/\/localhost:3077/);
+    assert.match(res.headers.get('content-security-policy'), /script-src 'self' https:\/\/www\.clarity\.ms https:\/\/\*\.clarity\.ms; connect-src https:\/\/\*\.clarity\.ms;/);
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
   });
 
@@ -42,6 +44,7 @@ describe('serving a build locally', () => {
 
   it('serves files by type, and the 404 page for anything missing', async () => {
     assert.equal((await fetch(`${base}/feed.xml`)).headers.get('content-type'), 'application/xml; charset=utf-8');
+    assert.equal((await fetch(`${base}/clarity.js`)).headers.get('content-type'), 'text/javascript; charset=utf-8');
     assert.equal((await fetch(`${base}/odd.bin`)).headers.get('content-type'), 'application/octet-stream');
     const missing = await fetch(`${base}/nope/`);
     assert.equal(missing.status, 404);
