@@ -1,7 +1,7 @@
 {
   "name": "edock-news",
   "version": "1.0.0",
-  "description": "news.edock.io, built from Edock's public news archive. No scripts on any page.",
+  "description": "news.edock.io, built from Edock's public news archive. No scripts on any page but Microsoft Clarity.",
   "license": "MIT",
   "private": true,
   "type": "module",

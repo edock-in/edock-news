@@ -4,11 +4,13 @@ Thank you for helping. A few rules keep news.edock.io safe and honest.
 
 ## The rules
 
-1. **No JavaScript on the pages.** Not a little, not from a CDN, not inline.
-   The pages' own policy blocks it, and `scripts/check-pages.mjs` fails any
-   build that adds it. Everything has to work as plain HTML and CSS.
+1. **No JavaScript on the pages but Microsoft Clarity.** Not a little, not
+   from a CDN, not inline. The one script is `static/clarity.js`, Clarity's
+   loader. The pages' own policy blocks anything else, and
+   `scripts/check-pages.mjs` fails any build that adds it. Everything has to
+   work as plain HTML and CSS.
 2. **Nothing from another address.** No outside fonts, images, styles, frames,
-   analytics or trackers.
+   analytics or trackers, apart from Clarity.
 3. **The record is the only source.** The site reads nothing but the public
    record. It never calls Edock's servers while building.
 4. **Every line you change is tested.** `npm test` measures coverage; keep it
