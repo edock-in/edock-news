@@ -214,6 +214,7 @@ h1, h2, h3 {
 }
 .avatar-small { width: 28px; height: 28px; font-size: 13px; }
 .avatar-large { width: 44px; height: 44px; font-size: 18px; }
+img.avatar { display: block; object-fit: cover; }
 
 .author { display: inline-flex; align-items: center; gap: 4px; }
 .author a { color: var(--ink); font-weight: 600; text-decoration: none; }

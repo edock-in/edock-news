@@ -17,7 +17,7 @@ import { createHash } from 'node:crypto';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readArchive, storiesFrom } from './archive.mjs';
+import { authorPhotosFrom, readArchive, storiesFrom } from './archive.mjs';
 import {
   aboutPage,
   historyPage,
@@ -80,6 +80,7 @@ export async function build(options) {
     cssPath: `/assets/site.${cssHash}.css`,
     mediaBase: '/',
     chain: { count: archive.count, head: archive.head },
+    authorPhotos: authorPhotosFrom(stories),
   };
 
   await rm(out, { recursive: true, force: true });

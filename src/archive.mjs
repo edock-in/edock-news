@@ -10,6 +10,7 @@
  *
  * `storiesFrom` then replays the chain into each story's current state:
  * its versions, whether its author withdrew it, whether Edock hid it.
+ * `authorPhotosFrom` finds each author's photo among those stories.
  */
 
 import { createHash } from 'node:crypto';
@@ -158,4 +159,29 @@ export function storiesFrom(entries) {
     if (better) bySlug.set(story.slug, story);
   }
   return [...bySlug.values()].sort((a, b) => a.versions[0].n - b.versions[0].n);
+}
+
+/**
+ * Each author's photo, by handle: the copy kept with their newest live
+ * version that has one. Versions saved before the record kept photos (before
+ * 23 Oct 2026) have none, so an author's older stories show the photo from a
+ * newer one. Only a picture on that version's own chain line counts: those
+ * are the ones checked above, and the build copies them onto the site.
+ */
+export function authorPhotosFrom(stories) {
+  const photos = new Map();
+  const newest = new Map();
+  for (const story of stories) {
+    if (!story.live) continue;
+    for (const version of story.versions) {
+      const author = version.record?.author;
+      const file = author?.image ? version.record.media?.[author.image] : null;
+      if (!file || !(version.media ?? []).includes(file)) continue;
+      if (!newest.has(author.handle) || version.n > newest.get(author.handle)) {
+        newest.set(author.handle, version.n);
+        photos.set(author.handle, file);
+      }
+    }
+  }
+  return photos;
 }
