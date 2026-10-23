@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, writeFile, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { ArchiveError, GENESIS_PREV, readArchive, sha256, storiesFrom } from '../src/archive.mjs';
+import { ArchiveError, GENESIS_PREV, authorPhotosFrom, readArchive, sha256, storiesFrom } from '../src/archive.mjs';
 import { chainLine, makeArchive, neha, sampleEvents } from './helpers/archive.mjs';
 
 const fresh = () => mkdtemp(path.join(tmpdir(), 'edock-news-'));
@@ -168,6 +168,55 @@ describe('each story now', () => {
     assert.deepEqual(stories.map((s) => s.id), ['a']);
     stories = storiesFrom([v(1, 'a'), { n: 2, kind: 'hidden', story: 'a', slug: 'same' }, v(3, 'b'), { n: 4, kind: 'hidden', story: 'b', slug: 'same' }]);
     assert.deepEqual(stories.map((s) => s.id), ['b']);
+  });
+});
+
+describe('each author’s photo', () => {
+  const PHOTO = 'https://d34afe9v4dkxkv.cloudfront.net/user-images/neha/thumbs/me.jpg';
+  const NEWER = 'https://d34afe9v4dkxkv.cloudfront.net/user-images/neha/thumbs/new.jpg';
+  const version = (n, story, image, file, { onLine = true, handle = 'neha' } = {}) => ({
+    n,
+    kind: 'version',
+    story,
+    slug: story,
+    media: file && onLine ? [file] : [],
+    record: {
+      version: 1,
+      author: { name: 'Neha', handle, ...(image === undefined ? {} : { image }) },
+      media: file ? { [image]: file } : {},
+    },
+  });
+
+  it('takes the copy from the author’s newest live version that has one', () => {
+    const stories = storiesFrom([
+      version(1, 'old', undefined, null),
+      version(2, 'a', PHOTO, 'media/a.jpg'),
+      version(3, 'b', NEWER, 'media/b.jpg'),
+      version(4, 'c', null, null),
+      version(5, 'd', PHOTO, 'media/r.jpg', { handle: 'ravi' }),
+    ]);
+    const photos = authorPhotosFrom(stories);
+    assert.equal(photos.get('neha'), 'media/b.jpg');
+    assert.equal(photos.get('ravi'), 'media/r.jpg');
+    assert.equal(photos.size, 2);
+  });
+
+  it('keeps an older photo when a newer story has the same author and no photo', () => {
+    const photos = authorPhotosFrom(
+      storiesFrom([version(1, 'b', NEWER, 'media/b.jpg'), version(2, 'a', PHOTO, 'media/a.jpg'), version(3, 'c', null, null)]),
+    );
+    assert.equal(photos.get('neha'), 'media/a.jpg');
+  });
+
+  it('ignores stories taken down and photos the chain line does not vouch for', () => {
+    const stories = storiesFrom([
+      version(1, 'a', PHOTO, 'media/a.jpg'),
+      version(2, 'gone', NEWER, 'media/gone.jpg'),
+      { n: 3, kind: 'withdrawn', story: 'gone', slug: 'gone' },
+      version(4, 'sly', NEWER, 'media/sly.jpg', { onLine: false }),
+    ]);
+    assert.equal(authorPhotosFrom(stories).get('neha'), 'media/a.jpg');
+    assert.equal(authorPhotosFrom([]).size, 0);
   });
 });
 

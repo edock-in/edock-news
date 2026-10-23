@@ -127,13 +127,21 @@ ${page.body}
 `;
 }
 
-/** The first letter of a name, for the round avatar blogs.edock.io shows too. */
+/** The first letter of a name, for the round avatar of an author with no photo. */
 export function initialOf(name) {
   const letter = String(name ?? '').trim().match(/\p{L}|\p{N}/u);
   return letter ? letter[0].toUpperCase() : 'E';
 }
 
-function avatar(record, size = 'small') {
+const AVATAR_PX = { small: 28, large: 44 };
+
+/** The author's photo from the record, as blogs.edock.io shows it; else their first letter. */
+function avatar(record, config, size = 'small') {
+  const photo = config.authorPhotos?.get(record.author.handle);
+  if (photo) {
+    const px = AVATAR_PX[size];
+    return `<img class="avatar avatar-${size}" src="${escapeHtml(`${config.mediaBase}${photo}`)}" alt="" width="${px}" height="${px}" decoding="async">`;
+  }
   return `<span class="avatar avatar-${size}" aria-hidden="true">${escapeHtml(initialOf(record.author.name))}</span>`;
 }
 
@@ -163,7 +171,7 @@ function storyRow(story, config, first = false) {
   const tag = record.tags?.length ? `<span class="chip">${escapeHtml(record.tags[0])}</span>` : '';
   return `<article class="row">
   <div class="row-text">
-    <p class="row-author">${avatar(record)}${byline(record, { link: false })}</p>
+    <p class="row-author">${avatar(record, config)}${byline(record, { link: false })}</p>
     <h2 class="row-title"><a href="/p/${record.slug}/">${escapeHtml(record.title)}</a></h2>
     <p class="row-dek">${escapeHtml(excerptOf(record, 180))}</p>
     <p class="meta"><span>${dayOf(story.first.first_published_at)}</span><span class="dot">·</span><span>${readingMinutes(record.word_count)} min read</span>${updated}${tag}</p>
@@ -224,7 +232,7 @@ export function storyPage(config, story) {
     <h1>${escapeHtml(record.title)}</h1>
     ${record.subtitle ? `<p class="dek">${escapeHtml(record.subtitle)}</p>` : ''}
     <div class="story-author">
-      ${avatar(record, 'large')}
+      ${avatar(record, config, 'large')}
       <div>
         <p class="author-line">${byline(record)}</p>
         <p class="meta"><span>${dayOf(story.first.first_published_at)}</span><span class="dot">·</span><span>${readingMinutes(record.word_count)} min read</span></p>

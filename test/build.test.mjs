@@ -1,4 +1,5 @@
 import { describe, it, before } from 'node:test';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -6,7 +7,7 @@ import path from 'node:path';
 import { build, parseArgs } from '../src/build.mjs';
 import { contentSecurityPolicy, dayOf, momentOf, readingMinutes, timeOf } from '../src/render.mjs';
 import { checkSite, problemsIn } from '../scripts/check-pages.mjs';
-import { makeArchive, sampleEvents } from './helpers/archive.mjs';
+import { makeArchive, neha, ravi, sampleEvents } from './helpers/archive.mjs';
 
 const fresh = () => mkdtemp(path.join(tmpdir(), 'edock-news-build-'));
 const JIO = 'jio-ipo-opens-21-october';
@@ -161,6 +162,43 @@ describe('building the site from the record', () => {
     await writeFile(chain, (await readFile(chain, 'utf8')).replace('"n":3', '"n":9'));
     await assert.rejects(build({ archive: dir, out }), /numbered 9/);
     assert.ok((await stat(path.join(out, 'index.html'))).isFile());
+  });
+});
+
+describe('authors’ photos', () => {
+  const PHOTO = 'https://d34afe9v4dkxkv.cloudfront.net/user-images/neha/thumbs/me.jpg';
+  const photoBytes = Buffer.from('neha photo');
+  const photoFile = `media/${createHash('sha256').update(photoBytes).digest('hex')}.jpg`;
+  let out;
+  const page = (relative) => readFile(path.join(out, relative), 'utf8');
+
+  before(async () => {
+    const archive = await fresh();
+    out = await fresh();
+    const withPhoto = { ...neha, image: PHOTO };
+    const older = { id: 'b0000000-0000-4000-8000-000000000001', slug: 'an-older-story', author: neha, first_published_at: '2026-10-09T06:00:00.000Z' };
+    const newer = { id: 'b0000000-0000-4000-8000-000000000002', slug: 'a-newer-story', author: withPhoto, first_published_at: '2026-10-11T06:00:00.000Z' };
+    const other = { id: 'b0000000-0000-4000-8000-000000000003', slug: 'ravis-story', author: ravi, first_published_at: '2026-10-10T06:00:00.000Z' };
+    await makeArchive(archive, [
+      { kind: 'version', story: older, version: { version: 1, title: 'An older story', content_html: '<p>Before photos.</p>', saved_at: older.first_published_at } },
+      { kind: 'version', story: other, version: { version: 1, title: 'Ravi’s story', content_html: '<p>No photo.</p>', saved_at: other.first_published_at } },
+      { kind: 'version', story: newer, pictures: { [PHOTO]: photoBytes }, version: { version: 1, title: 'A newer story', content_html: '<p>With a photo.</p>', saved_at: newer.first_published_at } },
+    ]);
+    await build({ archive, out });
+  });
+
+  it('shows the photo from the record, on this author’s older stories too', async () => {
+    const home = await page('index.html');
+    const img = `<img class="avatar avatar-small" src="/${photoFile}" alt="" width="28" height="28" decoding="async">`;
+    assert.equal(home.split(img).length - 1, 2);
+    assert.match(await page('p/an-older-story/index.html'), new RegExp(`<img class="avatar avatar-large" src="/${photoFile}" alt="" width="44" height="44"`));
+    assert.deepEqual(await readFile(path.join(out, photoFile)), photoBytes);
+  });
+
+  it('keeps the first letter for an author with no photo, and every promise', async () => {
+    assert.match(await page('index.html'), /<span class="avatar avatar-small" aria-hidden="true">R<\/span>/);
+    assert.match(await page('p/ravis-story/index.html'), /<span class="avatar avatar-large" aria-hidden="true">R<\/span>/);
+    assert.deepEqual(await checkSite(out), []);
   });
 });
 
