@@ -83,7 +83,7 @@ export function layout(config, page) {
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(description)}">
-${page.noindex ? '<meta name="robots" content="noindex">\n' : '<meta name="robots" content="max-image-preview:large">\n'}<meta name="theme-color" content="#FF3D1F">
+${page.noindex ? '<meta name="robots" content="noindex, follow">\n' : '<meta name="robots" content="max-image-preview:large">\n'}<meta name="theme-color" content="#FF3D1F">
 <link rel="canonical" href="${escapeHtml(canonical)}">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/favicon.png">
@@ -340,6 +340,7 @@ export function historyPage(config, story) {
     path: `/p/${story.slug}/history/`,
     title: `History: ${story.latest.title}`,
     body,
+    noindex: true,
   });
 }
 

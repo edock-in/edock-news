@@ -70,17 +70,20 @@ describe('building the site from the record', () => {
     assert.match(story, /<meta property="og:image" content="https:\/\/news.edock.io\/media\//);
     assert.match(story, /href="https:\/\/blogs.edock.io\/p\/jio-ipo-opens-21-october"/);
     assert.ok(!story.includes('noindex'));
+    assert.match(story, /<meta name="robots" content="max-image-preview:large">/);
+    assert.match(story, /<link rel="canonical" href="https:\/\/news.edock.io\/p\/jio-ipo-opens-21-october\/">/);
   });
 
   it('shows the full history, and what changed in each version', async () => {
     const history = await page(`p/${JIO}/history/index.html`);
     assert.match(history, /First version/);
     assert.match(history, /1 paragraph changed, 1 paragraph added/);
+    assert.match(history, /<meta name="robots" content="noindex, follow">/);
     const v2 = await page(`p/${JIO}/v/2/index.html`);
     assert.match(v2, /What changed from version 1/);
     assert.match(v2, /<ins>Shares list on 28 October.<\/ins>/);
     assert.match(v2, /<del>₹1,119.<\/del>/);
-    assert.match(v2, /noindex/);
+    assert.match(v2, /<meta name="robots" content="noindex, follow">/);
     const v1 = await page(`p/${JIO}/v/1/index.html`);
     assert.match(v1, /As it was first published/);
     assert.match(v1, /href="\/p\/jio-ipo-opens-21-october\/v\/2\/">Version 2/);
@@ -127,7 +130,9 @@ describe('building the site from the record', () => {
     assert.match(news, /jio-ipo-opens-21-october/);
     assert.match(news, /rbi-raises-repo-rate/);
     const robots = await page('robots.txt');
-    assert.match(robots, /Sitemap: https:\/\/news.edock.io\/news-sitemap.xml/);
+    for (const line of ['Allow: /', 'Disallow: /report/', 'Disallow: /p/*/history/', 'Disallow: /p/*/v/', 'Disallow: /p/*/report/', 'Sitemap: https://news.edock.io/sitemap.xml', 'Sitemap: https://news.edock.io/news-sitemap.xml']) {
+      assert.ok(robots.split('\n').includes(line), line);
+    }
     const record = JSON.parse(await page('record.json'));
     assert.deepEqual({ ...record, chain_head: undefined }, { chain_lines: 7, chain_head: undefined, stories: 4, live: 2, built_at: '2026-10-11T12:00:00.000Z' });
   });
