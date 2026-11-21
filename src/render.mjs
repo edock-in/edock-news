@@ -74,11 +74,16 @@ const PEN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
  * Search Central's "Help your readers find your site through preferred
  * sources in Google Search", the deeplink way, because pages here run no
  * script but Clarity: a plain link to Google's source preferences tool for
- * this site, drawn with Google's own badge (its English light and dark
- * pictures, kept on this site in /google/). A reader who picks Edock News
- * there sees more of it in Google's Top Stories.
+ * Edock, drawn with Google's own badge (its English light and dark
+ * pictures, kept on this site in /google/). A reader who picks Edock there
+ * sees more of it in Google's Top Stories.
+ *
+ * The link names edock.io, not news.edock.io: Google's tool lists edock.io as
+ * a source but finds nothing for news.edock.io (checked 22 Nov 2026), and
+ * Google says to send readers to the site as the tool lists it. If Google
+ * ever lists news.edock.io on its own, put that here.
  */
-export const PREFERRED_SOURCE_HOST = 'news.edock.io';
+export const PREFERRED_SOURCE_HOST = 'edock.io';
 export const PREFERRED_SOURCE_URL = `https://www.google.com/preferences/source?q=${PREFERRED_SOURCE_HOST}`;
 
 const BADGE_SET = (look) => `/google/preferred-source-${look}.png 338w, /google/preferred-source-${look}@2x.png 676w`;
@@ -88,7 +93,7 @@ export function preferredSourceBadge() {
   return `<a class="google-source" href="${PREFERRED_SOURCE_URL}" target="_blank" rel="noopener">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="${BADGE_SET('dark')}" sizes="180px">
-    <img src="/google/preferred-source-light.png" srcset="${BADGE_SET('light')}" sizes="180px" width="180" height="57" alt="Add Edock News as a preferred source on Google" decoding="async">
+    <img src="/google/preferred-source-light.png" srcset="${BADGE_SET('light')}" sizes="180px" width="180" height="57" alt="Add Edock as a preferred source on Google" decoding="async">
   </picture>
 </a>`;
 }
