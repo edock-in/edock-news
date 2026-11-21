@@ -72,13 +72,13 @@ describe('building the site from the record', () => {
     assert.ok(!story.includes('noindex'));
   });
 
-  it('links Google’s preferred-source badge to news.edock.io on the home page and every story, from this site’s own pictures', async () => {
-    const link = 'href="https://www.google.com/preferences/source?q=news.edock.io" target="_blank" rel="noopener"';
+  it('links Google’s preferred-source badge to edock.io on the home page and every story, from this site’s own pictures', async () => {
+    const link = 'href="https://www.google.com/preferences/source?q=edock.io" target="_blank" rel="noopener"';
     for (const file of ['index.html', `p/${JIO}/index.html`]) {
       const html = await page(file);
       assert.equal(html.split(link).length - 1, 1, file);
       assert.match(html, /<source media="\(prefers-color-scheme: dark\)" srcset="\/google\/preferred-source-dark\.png 338w, \/google\/preferred-source-dark@2x\.png 676w"/);
-      assert.match(html, /<img src="\/google\/preferred-source-light\.png" [^>]*alt="Add Edock News as a preferred source on Google"/);
+      assert.match(html, /<img src="\/google\/preferred-source-light\.png" [^>]*alt="Add Edock as a preferred source on Google"/);
     }
     // At the top of the home page's list, above its tabs.
     const home = await page('index.html');
@@ -97,10 +97,10 @@ describe('building the site from the record', () => {
     }
   });
 
-  it('keeps the badge pointed at news.edock.io in a build for another address', async () => {
+  it('keeps the badge pointed at edock.io in a build for another address', async () => {
     const into = await fresh();
     await build({ archive, out: into, origin: 'http://127.0.0.1:4173/' });
-    assert.match(await readFile(path.join(into, 'index.html'), 'utf8'), /preferences\/source\?q=news\.edock\.io"/);
+    assert.match(await readFile(path.join(into, 'index.html'), 'utf8'), /preferences\/source\?q=edock\.io"/);
   });
 
   it('shows the full history, and what changed in each version', async () => {
