@@ -255,6 +255,12 @@ img.avatar { display: block; object-fit: cover; }
 .cover { margin: 0 0 28px; }
 .cover img { display: block; width: 100%; border-radius: 16px; }
 
+/* A story's reel: 9:16, the column wide on a phone, never taller than most of the screen. */
+.reel { margin: 0 0 28px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.reel video, .reel img { display: block; width: min(100%, calc(80vh * 9 / 16)); aspect-ratio: 9 / 16; object-fit: contain; border-radius: 16px; background: #111; }
+.reel figcaption { font-size: 15px; }
+.reel figcaption a { color: inherit; text-underline-offset: 3px; }
+
 .story-body { font-size: 19px; line-height: 1.75; overflow-wrap: anywhere; }
 .story-body p { margin: 0 0 1.1em; }
 .story-body h1, .story-body h2 { font-size: 26px; margin: 1.6em 0 0.5em; }

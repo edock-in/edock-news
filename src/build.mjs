@@ -9,8 +9,11 @@
  *   --origin <url>   the site's address (default https://news.edock.io)
  *   --api <url>      where the Report form posts (default https://api.edock.io)
  *   --now <iso>      the time to build as (default now); only the news sitemap uses it
+ *   --reel-hosts <a,b>  the only hosts reel videos are fetched from (default Edock's media CDN)
  *
- * The build stops, writing nothing, if the archive's chain is broken.
+ * The build stops, writing nothing, if the archive's chain is broken. A reel
+ * video that cannot be fetched or does not match its record never stops it:
+ * that story shows the reel's poster and link instead (src/reels.mjs).
  */
 
 import { createHash } from 'node:crypto';
@@ -31,6 +34,7 @@ import {
   versionPage,
 } from './render.mjs';
 import { newsSitemap, robotsTxt, rssFeed, sitemap } from './feeds.mjs';
+import { copyReels, REEL_HOSTS } from './reels.mjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -62,7 +66,7 @@ async function write(out, relative, content) {
 }
 
 /** Build the whole site. Returns what was written, for the log. */
-export async function build(options) {
+export async function build(options, { fetchImpl } = {}) {
   const archiveDir = path.resolve(options.archive);
   const out = path.resolve(options.out);
   const now = options.now ? new Date(options.now) : new Date();
@@ -87,6 +91,12 @@ export async function build(options) {
   await mkdir(out, { recursive: true });
   await write(out, `assets/site.${cssHash}.css`, css);
   await cp(path.join(ROOT, 'static'), out, { recursive: true });
+
+  const reelHosts = options['reel-hosts']
+    ? options['reel-hosts'].split(',').map((h) => h.trim().toLowerCase()).filter(Boolean)
+    : REEL_HOSTS;
+  const reels = await copyReels(stories, out, { hosts: reelHosts, ...(fetchImpl ? { fetchImpl } : {}) });
+  config.reels = reels.copied;
 
   const pages = [];
   const page = async (relative, html) => {
@@ -133,15 +143,25 @@ export async function build(options) {
     `${JSON.stringify({ chain_lines: archive.count, chain_head: archive.head, stories: stories.length, live: stories.filter((s) => s.live).length, built_at: now.toISOString() }, null, 2)}\n`,
   );
 
-  return { pages: pages.length, media: media.size, stories: stories.length, chain: archive.count };
+  return {
+    pages: pages.length,
+    media: media.size,
+    stories: stories.length,
+    chain: archive.count,
+    reels: reels.copied.size,
+    reelsSkipped: reels.skipped,
+  };
 }
 
 /* node:coverage disable */
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   build(parseArgs(process.argv.slice(2)))
-    .then((result) =>
-      console.log(`Built ${result.pages} pages, ${result.media} pictures, ${result.stories} stories from ${result.chain} chain lines.`),
-    )
+    .then((result) => {
+      console.log(
+        `Built ${result.pages} pages, ${result.media} pictures, ${result.reels} reels, ${result.stories} stories from ${result.chain} chain lines.`,
+      );
+      for (const line of result.reelsSkipped) console.warn(`Reel left out (poster and link shown): ${line}`);
+    })
     .catch((error) => {
       console.error(error.name === 'ArchiveError' ? `The public record failed its check: ${error.message}` : error);
       process.exit(1);

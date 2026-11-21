@@ -6,7 +6,8 @@
  * nowhere else. Apart from Clarity, the only thing a reader sends anywhere is
  * the Report form, a plain form post to the Edock API. Styles come from one
  * stylesheet on this site, fonts from this site, pictures from this site's
- * copy of the archive. The policy below says so to the browser too, in the
+ * copy of the archive, and a story's reel video from this site's checked
+ * copy (src/reels.mjs). The policy below says so to the browser too, in the
  * page itself as well as in the server's headers.
  */
 
@@ -51,6 +52,7 @@ export function contentSecurityPolicy(config) {
     `script-src 'self' ${CLARITY_SOURCES.script}`,
     `connect-src ${CLARITY_SOURCES.connect}`,
     `img-src 'self' ${CLARITY_SOURCES.img}`,
+    "media-src 'self'",
     "style-src 'self'",
     "font-src 'self'",
     `form-action 'self' ${new URL(config.api).origin}`,
@@ -160,6 +162,31 @@ function coverOf(record, config) {
   return copy ? `${config.mediaBase}${copy}` : null;
 }
 
+/**
+ * The reel a story was written from, in place of its cover: this site's own
+ * copy of the video when the build checked it against the record, else its
+ * poster (or the cover) as a picture. Either way a link to it on Instagram
+ * when it went up there. Null for a story with no reel.
+ */
+export function reelFigure(record, config) {
+  const reel = record.reel;
+  if (!reel) return null;
+  const posterCopy = reel.poster ? record.media?.[reel.poster] : null;
+  const poster = posterCopy ? `${config.mediaBase}${posterCopy}` : coverOf(record, config);
+  const link = /^https:\/\/([a-z0-9-]+\.)*instagram\.com\//i.test(reel.post_url ?? '')
+    ? `\n    <figcaption><a href="${escapeHtml(reel.post_url)}" rel="noopener">Watch on Instagram</a></figcaption>`
+    : '';
+  if (config.reels?.has(reel.sha256)) {
+    const posterAttr = poster ? ` poster="${escapeHtml(poster)}"` : '';
+    return `<figure class="reel">
+    <video controls playsinline preload="none"${posterAttr} src="${config.mediaBase}media/reels/${reel.sha256}.mp4" aria-label="${escapeHtml(`Reel: ${record.title}`)}"></video>${link}
+  </figure>`;
+  }
+  if (!poster && !link) return null;
+  return `<figure class="reel">${poster ? `\n    <img src="${escapeHtml(poster)}" alt="" decoding="async">` : ''}${link}
+  </figure>`;
+}
+
 function storyRow(story, config, first = false) {
   const record = story.latest;
   const cover = coverOf(record, config);
@@ -245,7 +272,7 @@ export function storyPage(config, story) {
       <a href="${recordLink(config, last)}">Public record</a>
     </div>
   </header>
-  ${cover ? `<figure class="cover"><img src="${escapeHtml(cover)}" alt="" decoding="async"></figure>` : ''}
+  ${reelFigure(record, config) ?? (cover ? `<figure class="cover"><img src="${escapeHtml(cover)}" alt="" decoding="async"></figure>` : '')}
   <div class="story-body">
 ${cleanStoryHtml(record.content_html, record.media, config.mediaBase)}
   </div>

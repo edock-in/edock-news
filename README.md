@@ -28,6 +28,11 @@ only thing it reads is the public record.
   all come from news.edock.io itself. Pictures are the copies kept in the
   public record. Clarity's loader is a file on this site, and the page policy
   lets it reach clarity.ms and nowhere else.
+- **Reel videos come from Edock's own storage, checked.** A story written
+  from a reel plays it from news.edock.io. The video is too big for the public
+  record, so the build copies it from Edock's media CDN (and nowhere else) and
+  keeps it only if its size and SHA-256 match what the record says. If it does
+  not, the page shows the reel's poster and its link instead.
 - **No building from a broken record.** If any link in the chain does not
   match, the build stops and the site stays as it was.
 - **Taken-down stories leave a note.** A withdrawn or hidden story is replaced
@@ -66,6 +71,7 @@ npm run build
 | `src/diff.mjs` | What changed between two versions, word by word |
 | `src/render.mjs` | Every page, as HTML, and the page policy |
 | `src/feeds.mjs` | RSS, sitemaps, robots.txt |
+| `src/reels.mjs` | Copies each story's reel video from Edock's media CDN and checks its SHA-256 |
 | `src/build.mjs` | Puts it all together |
 | `src/serve.mjs` | A local server with the live site's headers |
 | `src/site.css` | The one stylesheet |

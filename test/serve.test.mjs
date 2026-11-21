@@ -20,6 +20,7 @@ describe('serving a build locally', () => {
     await writeFile(path.join(root, 'feed.xml'), '<rss/>');
     await writeFile(path.join(root, 'odd.bin'), 'x');
     await writeFile(path.join(root, 'clarity.js'), '');
+    await writeFile(path.join(root, 'reel.mp4'), '0123456789');
     server = createServer(handler(root, 'http://localhost:3077'));
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
     base = `http://127.0.0.1:${server.address().port}`;
@@ -34,6 +35,33 @@ describe('serving a build locally', () => {
     assert.match(res.headers.get('content-security-policy'), /form-action 'self' http:\/\/localhost:3077/);
     assert.match(res.headers.get('content-security-policy'), /script-src 'self' https:\/\/www\.clarity\.ms https:\/\/\*\.clarity\.ms; connect-src https:\/\/\*\.clarity\.ms;/);
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
+  });
+
+  it('serves a video whole or by range, as S3 does, under a policy that lets the page play it', async () => {
+    const whole = await fetch(`${base}/reel.mp4`);
+    assert.equal(whole.status, 200);
+    assert.equal(whole.headers.get('content-type'), 'video/mp4');
+    assert.equal(whole.headers.get('accept-ranges'), 'bytes');
+    assert.match(whole.headers.get('content-security-policy'), /media-src 'self';/);
+    assert.equal(await whole.text(), '0123456789');
+    const part = await fetch(`${base}/reel.mp4`, { headers: { range: 'bytes=2-4' } });
+    assert.equal(part.status, 206);
+    assert.equal(part.headers.get('content-range'), 'bytes 2-4/10');
+    assert.equal(await part.text(), '234');
+    const open = await fetch(`${base}/reel.mp4`, { headers: { range: 'bytes=8-' } });
+    assert.equal(await open.text(), '89');
+    const tail = await fetch(`${base}/reel.mp4`, { headers: { range: 'bytes=-3' } });
+    assert.equal(tail.headers.get('content-range'), 'bytes 7-9/10');
+    const long = await fetch(`${base}/reel.mp4`, { headers: { range: 'bytes=5-99' } });
+    assert.equal(long.headers.get('content-range'), 'bytes 5-9/10');
+    const past = await fetch(`${base}/reel.mp4`, { headers: { range: 'bytes=20-' } });
+    assert.equal(past.status, 416);
+    assert.equal(past.headers.get('content-range'), 'bytes */10');
+    const odd = await fetch(`${base}/reel.mp4`, { headers: { range: 'bytes=-' } });
+    assert.equal(odd.status, 200);
+    const missing = await fetch(`${base}/nope.mp4`, { headers: { range: 'bytes=0-1' } });
+    assert.equal(missing.status, 404);
+    assert.equal(missing.headers.get('accept-ranges'), null);
   });
 
   it('sends a folder without its slash to the slash', async () => {

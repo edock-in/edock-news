@@ -38,11 +38,14 @@ export function problemsIn(html) {
   if (/<style\b/i.test(html)) problems.push('has a style block');
   if (/<(iframe|object|embed|frame|base|applet)\b/i.test(html)) problems.push('embeds another page');
   if (/<meta[^>]+http-equiv\s*=\s*["']?refresh/i.test(html)) problems.push('redirects itself');
-  for (const match of html.matchAll(/<(img|link|source|video|audio|input)\b[^>]*\s(?:src|href|srcset)\s*=\s*["']([^"']+)["']/gi)) {
-    const [, tag, url] = match;
-    if (tag.toLowerCase() === 'link' && !/rel\s*=\s*["'](stylesheet|icon|apple-touch-icon|preload)["']/i.test(match[0])) continue;
-    if (/^(https?:)?\/\//i.test(url) || /^(javascript|data):/i.test(url)) {
-      problems.push(`loads ${url} from elsewhere`);
+  // Every address a tag loads, not just its last: a video has a poster and a src.
+  for (const match of html.matchAll(/<(img|link|source|video|audio|input)\b[^>]*>/gi)) {
+    const tag = match[1].toLowerCase();
+    if (tag === 'link' && !/rel\s*=\s*["'](stylesheet|icon|apple-touch-icon|preload)["']/i.test(match[0])) continue;
+    for (const [, url] of match[0].matchAll(/\s(?:src|href|srcset|poster)\s*=\s*["']([^"']+)["']/gi)) {
+      if (/^(https?:)?\/\//i.test(url) || /^(javascript|data):/i.test(url)) {
+        problems.push(`loads ${url} from elsewhere`);
+      }
     }
   }
   if (!/<meta http-equiv="Content-Security-Policy"/.test(html)) problems.push('has no page policy');

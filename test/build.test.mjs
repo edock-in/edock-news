@@ -26,7 +26,7 @@ describe('building the site from the record', () => {
   });
 
   it('writes every page, and copies the pictures of live stories', async () => {
-    assert.deepEqual(result, { pages: 19, media: 1, stories: 4, chain: 7 });
+    assert.deepEqual(result, { pages: 19, media: 1, stories: 4, chain: 7, reels: 0, reelsSkipped: [] });
     for (const file of ['index.html', 'about/index.html', '404.html', 'report/sent/index.html', `p/${JIO}/v/2/index.html`, 'fonts/oswald-latin.woff2', 'favicon.png']) {
       assert.ok((await stat(path.join(out, file))).isFile(), file);
     }
@@ -231,7 +231,7 @@ describe('dates and rules', () => {
   it('allows only this site, Clarity, and posting to the API', () => {
     assert.equal(
       contentSecurityPolicy({ api: 'https://api.edock.io/x' }),
-      "default-src 'none'; script-src 'self' https://www.clarity.ms https://*.clarity.ms; connect-src https://*.clarity.ms; img-src 'self' https://*.clarity.ms https://c.bing.com; style-src 'self'; font-src 'self'; form-action 'self' https://api.edock.io; base-uri 'none'",
+      "default-src 'none'; script-src 'self' https://www.clarity.ms https://*.clarity.ms; connect-src https://*.clarity.ms; img-src 'self' https://*.clarity.ms https://c.bing.com; media-src 'self'; style-src 'self'; font-src 'self'; form-action 'self' https://api.edock.io; base-uri 'none'",
     );
   });
 });
@@ -246,7 +246,8 @@ describe('the page checker', () => {
     const problems = problemsIn(
       '<script>x()</script><p onclick="x()" style="color:red">a</p><style>p{}</style><iframe></iframe>' +
         '<meta http-equiv="refresh" content="0;url=https://evil.test"><img src="https://evil.test/p.gif"><img src="//evil.test/p.gif">' +
-        '<img src="data:image/png;base64,x"><link rel="stylesheet" href="https://fonts.googleapis.com/css">',
+        '<img src="data:image/png;base64,x"><link rel="stylesheet" href="https://fonts.googleapis.com/css">' +
+        '<video src="https://evil.test/v.mp4"></video><video poster="https://evil.test/p.jpg" src="/media/reels/a.mp4"></video>',
     );
     assert.deepEqual([...new Set(problems)], [
       'runs a script',
@@ -259,6 +260,8 @@ describe('the page checker', () => {
       'loads //evil.test/p.gif from elsewhere',
       'loads data:image/png;base64,x from elsewhere',
       'loads https://fonts.googleapis.com/css from elsewhere',
+      'loads https://evil.test/v.mp4 from elsewhere',
+      'loads https://evil.test/p.jpg from elsewhere',
       'has no page policy',
     ]);
   });
