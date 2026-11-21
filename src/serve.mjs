@@ -8,6 +8,7 @@
  */
 
 import { createServer } from 'node:http';
+import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -59,22 +60,22 @@ export function handler(root, api) {
   return async (req, res) => {
     const send = async (status, file) => {
       const type = { 'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream' };
-      const body = await readFile(file);
       // A video is read in pieces, as S3 and CloudFront serve it: Safari
       // plays nothing from a server that cannot send a range.
       const range = status === 200 ? /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '') : null;
       if (range && (range[1] || range[2])) {
-        const start = range[1] ? Number(range[1]) : Math.max(0, body.length - Number(range[2]));
-        const end = range[1] && range[2] ? Math.min(Number(range[2]), body.length - 1) : body.length - 1;
-        if (start > end || start >= body.length) {
-          res.writeHead(416, { ...headers, 'Content-Range': `bytes */${body.length}` });
+        const size = (await stat(file)).size;
+        const start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
+        const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+        if (start > end || start >= size) {
+          res.writeHead(416, { ...headers, 'Content-Range': `bytes */${size}` });
           return res.end();
         }
-        res.writeHead(206, { ...headers, ...type, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes ${start}-${end}/${body.length}` });
-        return res.end(body.subarray(start, end + 1));
+        res.writeHead(206, { ...headers, ...type, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes ${start}-${end}/${size}` });
+        return createReadStream(file, { start, end }).pipe(res);
       }
       res.writeHead(status, { ...headers, ...type, ...(status === 200 ? { 'Accept-Ranges': 'bytes' } : {}) });
-      res.end(body);
+      res.end(await readFile(file));
     };
     const file = fileFor(root, req.url ?? '/');
     try {

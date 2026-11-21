@@ -13,6 +13,7 @@
 
 import { cleanStoryHtml, escapeHtml, excerptOf } from './sanitize.mjs';
 import { changeBlocks, changeSummary } from './diff.mjs';
+import { reelPath } from './reels.mjs';
 
 export const REPORT_REASONS = [
   ['false_or_misleading', 'False or misleading'],
@@ -172,19 +173,23 @@ export function reelFigure(record, config) {
   const reel = record.reel;
   if (!reel) return null;
   const posterCopy = reel.poster ? record.media?.[reel.poster] : null;
-  const poster = posterCopy ? `${config.mediaBase}${posterCopy}` : coverOf(record, config);
+  const cover = coverOf(record, config);
+  const poster = posterCopy ? `${config.mediaBase}${posterCopy}` : cover;
   const link = /^https:\/\/([a-z0-9-]+\.)*instagram\.com\//i.test(reel.post_url ?? '')
     ? `\n    <figcaption><a href="${escapeHtml(reel.post_url)}" rel="noopener">Watch on Instagram</a></figcaption>`
     : '';
   if (config.reels?.has(reel.sha256)) {
     const posterAttr = poster ? ` poster="${escapeHtml(poster)}"` : '';
     return `<figure class="reel">
-    <video controls playsinline preload="none"${posterAttr} src="${config.mediaBase}media/reels/${reel.sha256}.mp4" aria-label="${escapeHtml(`Reel: ${record.title}`)}"></video>${link}
+    <video controls playsinline preload="none"${posterAttr} src="${config.mediaBase}${reelPath(reel.sha256)}" aria-label="${escapeHtml(`Reel: ${record.title}`)}"></video>${link}
   </figure>`;
   }
-  if (!poster && !link) return null;
-  return `<figure class="reel">${poster ? `\n    <img src="${escapeHtml(poster)}" alt="" decoding="async">` : ''}${link}
-  </figure>`;
+  // No video: the reel's poster in its own 9:16 frame, or the cover as covers are shown.
+  if (posterCopy) {
+    return `<figure class="reel">\n    <img src="${escapeHtml(poster)}" alt="" decoding="async">${link}\n  </figure>`;
+  }
+  if (!cover && !link) return null;
+  return `<figure class="cover">${cover ? `<img src="${escapeHtml(cover)}" alt="" decoding="async">` : ''}${link}</figure>`;
 }
 
 function storyRow(story, config, first = false) {

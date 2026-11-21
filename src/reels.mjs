@@ -10,10 +10,15 @@
  * The page then plays this site's own copy. A video that cannot be fetched or
  * does not match is left out: the page shows the reel's poster and its link
  * instead, and the build carries on.
+ *
+ * Reels are gathered into a folder of their own before the site is written
+ * (`--reel-cache`, which the deploy keeps between runs), so a reel already
+ * checked once is never fetched again, and a slow or failed download never
+ * leaves the site half written.
  */
 
 import { createHash } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 /** Where Edock's media CDN serves story reels from. */
@@ -54,36 +59,79 @@ export async function fetchReel(reel, { hosts = REEL_HOSTS, fetchImpl = fetch } 
     if (!response.ok) return { bytes: null, reason: `HTTP ${response.status}` };
     const declared = Number(response.headers.get('content-length') ?? reel.bytes);
     if (declared !== reel.bytes) return { bytes: null, reason: `${declared} bytes, the record says ${reel.bytes}` };
-    const bytes = Buffer.from(await response.arrayBuffer());
-    if (bytes.length !== reel.bytes) return { bytes: null, reason: `${bytes.length} bytes, the record says ${reel.bytes}` };
-    const sha256 = createHash('sha256').update(bytes).digest('hex');
-    if (sha256 !== reel.sha256) return { bytes: null, reason: 'its SHA-256 does not match the record' };
-    return { bytes, reason: null };
+    // Read no more than the record says, whatever the server sends.
+    const chunks = [];
+    let length = 0;
+    for await (const chunk of response.body ?? []) {
+      length += chunk.length;
+      if (length > reel.bytes) return { bytes: null, reason: `more than the ${reel.bytes} bytes the record says` };
+      chunks.push(chunk);
+    }
+    const bytes = Buffer.concat(chunks);
+    return checked(bytes, reel);
   } catch (error) {
     return { bytes: null, reason: error?.message ?? String(error) };
   }
 }
 
+/** The bytes when they are exactly the file the record names; else the reason. */
+function checked(bytes, reel) {
+  if (bytes.length !== reel.bytes) return { bytes: null, reason: `${bytes.length} bytes, the record says ${reel.bytes}` };
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  if (sha256 !== reel.sha256) return { bytes: null, reason: 'its SHA-256 does not match the record' };
+  return { bytes, reason: null };
+}
+
+/** A copy already in the folder that still matches its record, or null. */
+async function kept(file, reel) {
+  try {
+    return checked(await readFile(file), reel).bytes;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Copy the reel of every live story's current version into `out`. Returns
- * the hashes that were copied (each is at reelPath(hash)), and a line for
- * each one that was not, for the log. Never throws for a bad reel.
+ * Gather the reel of every live story's current version into `dir`, named
+ * `<sha256>.mp4`: a copy already there is checked and kept, any other is
+ * fetched. Returns the hashes that are ready, and a line for each reel that
+ * is not, for the log. Never throws for a bad reel.
  */
-export async function copyReels(stories, out, options = {}) {
-  const copied = new Set();
+export async function gatherReels(stories, dir, options = {}) {
+  const ready = new Set();
   const skipped = [];
+  await mkdir(dir, { recursive: true });
   for (const story of stories) {
     const reel = story.live ? story.latest?.reel : null;
-    if (!reel || copied.has(reel.sha256)) continue;
+    if (!reel || ready.has(reel.sha256)) continue;
+    const problem = reelProblem(reel, options.hosts);
+    if (problem) {
+      skipped.push(`${story.slug}: ${problem}`);
+      continue;
+    }
+    const file = path.join(dir, `${reel.sha256}.mp4`);
+    if (await kept(file, reel)) {
+      ready.add(reel.sha256);
+      continue;
+    }
     const { bytes, reason } = await fetchReel(reel, options);
     if (!bytes) {
       skipped.push(`${story.slug}: ${reason}`);
       continue;
     }
-    const file = path.join(out, reelPath(reel.sha256));
-    await mkdir(path.dirname(file), { recursive: true });
-    await writeFile(file, bytes);
-    copied.add(reel.sha256);
+    // Written whole, then named, so an interrupted run leaves no half file.
+    await writeFile(`${file}.part`, bytes);
+    await rename(`${file}.part`, file);
+    ready.add(reel.sha256);
   }
-  return { copied, skipped };
+  return { ready, skipped };
+}
+
+/** Put the gathered reels on the site, at reelPath(hash). */
+export async function placeReels(ready, dir, out) {
+  for (const sha256 of ready) {
+    const file = path.join(out, reelPath(sha256));
+    await mkdir(path.dirname(file), { recursive: true });
+    await copyFile(path.join(dir, `${sha256}.mp4`), file);
+  }
 }

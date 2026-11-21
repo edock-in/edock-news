@@ -1,11 +1,11 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, readdir } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { build } from '../src/build.mjs';
-import { REEL_HOSTS, copyReels, fetchReel, reelPath, reelProblem } from '../src/reels.mjs';
+import { REEL_HOSTS, fetchReel, gatherReels, placeReels, reelPath, reelProblem } from '../src/reels.mjs';
 import { reelFigure } from '../src/render.mjs';
 import { checkSite } from '../scripts/check-pages.mjs';
 import { makeArchive, neha } from './helpers/archive.mjs';
@@ -79,6 +79,11 @@ describe('fetching a reel', () => {
     assert.equal((await fetchReel(reel(), cdn(other))).reason, 'its SHA-256 does not match the record');
     const short = Buffer.from('short');
     assert.match((await fetchReel(reel(), cdn(short, { length: VIDEO.length }))).reason, /^5 bytes, the record says/);
+    // A server that sends more than it said stops being read at the record's size.
+    const long = Buffer.concat([VIDEO, VIDEO]);
+    assert.equal((await fetchReel(reel(), cdn(long, { length: VIDEO.length }))).reason, `more than the ${VIDEO.length} bytes the record says`);
+    const empty = async () => new Response(null, { status: 200 });
+    assert.match((await fetchReel(reel(), { fetchImpl: empty })).reason, /^0 bytes, the record says/);
     const failing = async () => {
       throw new Error('network down');
     };
@@ -89,19 +94,42 @@ describe('fetching a reel', () => {
     assert.equal((await fetchReel(reel(), { fetchImpl: odd })).reason, 'odd');
   });
 
-  it('copies each live story’s reel once, and says which it left out', async () => {
+  it('gathers each live story’s reel once, says which it left out, and places them on the site', async () => {
+    const dir = await fresh();
     const out = await fresh();
     const { fetchImpl, calls } = cdn();
     const live = (slug, r) => ({ slug, live: true, latest: { reel: r } });
-    const { copied, skipped } = await copyReels(
-      [live('a', reel()), live('b', reel()), live('c', reel({ sha256: 'f'.repeat(64) })), { slug: 'd', live: false, latest: { reel: reel() } }, live('e', undefined)],
-      out,
+    const { ready, skipped } = await gatherReels(
+      [
+        live('a', reel()),
+        live('b', reel()),
+        live('c', reel({ sha256: 'f'.repeat(64) })),
+        live('x', reel({ url: 'https://evil.test/v.mp4', sha256: 'd'.repeat(64) })),
+        { slug: 'd', live: false, latest: { reel: reel() } },
+        live('e', undefined),
+      ],
+      dir,
       { fetchImpl },
     );
-    assert.deepEqual([...copied], [SHA]);
-    assert.deepEqual(skipped, ['c: its SHA-256 does not match the record']);
+    assert.deepEqual([...ready], [SHA]);
+    assert.deepEqual(skipped, ['c: its SHA-256 does not match the record', "x: an address off Edock's media CDN (evil.test)"]);
     assert.equal(calls.length, 2);
+    assert.deepEqual(await readdir(dir), [`${SHA}.mp4`]);
+    await placeReels(ready, dir, out);
     assert.deepEqual(await readFile(path.join(out, reelPath(SHA))), VIDEO);
+  });
+
+  it('keeps a checked copy from an earlier build, and fetches again one that no longer matches', async () => {
+    const dir = await fresh();
+    await writeFile(path.join(dir, `${SHA}.mp4`), VIDEO);
+    const first = cdn();
+    assert.deepEqual([...(await gatherReels([{ slug: 'a', live: true, latest: { reel: reel() } }], dir, first)).ready], [SHA]);
+    assert.equal(first.calls.length, 0);
+    await writeFile(path.join(dir, `${SHA}.mp4`), 'tampered');
+    const second = cdn();
+    assert.deepEqual([...(await gatherReels([{ slug: 'a', live: true, latest: { reel: reel() } }], dir, second)).ready], [SHA]);
+    assert.equal(second.calls.length, 1);
+    assert.deepEqual(await readFile(path.join(dir, `${SHA}.mp4`)), VIDEO);
   });
 });
 
@@ -126,10 +154,15 @@ describe('the reel on a story page', () => {
     const noPoster = { ...record, reel: reel({ poster: null, post_url: 'https://evil.test/' }) };
     assert.match(reelFigure(noPoster, config()), /poster="\/media\/c.jpg"/);
     assert.ok(!reelFigure(noPoster, config()).includes('evil.test'));
+    // No video and no poster: the cover as covers are shown, with the link.
+    assert.equal(
+      reelFigure({ ...record, reel: reel({ poster: null }) }, config([])),
+      '<figure class="cover"><img src="/media/c.jpg" alt="" decoding="async">\n    <figcaption><a href="https://www.instagram.com/reel/abc/" rel="noopener">Watch on Instagram</a></figcaption></figure>',
+    );
     const bare = { title: 't', media: {}, reel: reel({ poster: null, post_url: null }) };
     assert.ok(!reelFigure(bare, config()).includes('poster='));
     assert.equal(reelFigure(bare, config([])), null);
-    assert.match(reelFigure({ ...bare, reel: reel({ poster: null }) }, config([])), /^<figure class="reel">\n    <figcaption>/);
+    assert.match(reelFigure({ ...bare, reel: reel({ poster: null }) }, config([])), /^<figure class="cover">\n    <figcaption>/);
     assert.equal(reelFigure({ title: 't' }, config()), null);
     assert.equal(reelFigure({ ...bare }, { mediaBase: '/' }), null);
   });
@@ -178,5 +211,14 @@ describe('building a site with reels', () => {
     ]);
     const r = await build({ archive, out: into, 'reel-hosts': ' cdn.test, ' }, cdn());
     assert.deepEqual(r.reelsSkipped, ["a-reel-story: an address off Edock's media CDN (d34afe9v4dkxkv.cloudfront.net)"]);
+    // A kept folder: the second build fetches nothing.
+    const cache = await fresh();
+    const first = cdn();
+    await build({ archive, out: into, 'reel-cache': cache }, first);
+    const second = cdn();
+    const again = await build({ archive, out: into, 'reel-cache': cache }, second);
+    assert.equal(first.calls.length, 1);
+    assert.equal(second.calls.length, 0);
+    assert.equal(again.reels, 1);
   });
 });
