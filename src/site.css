@@ -225,6 +225,16 @@ img.avatar { display: block; object-fit: cover; }
   border: 1px solid var(--hairline); border-radius: 999px; padding: 0 8px; line-height: 18px; margin-left: 2px;
 }
 
+/* Google's "preferred source" badge: its own picture, in the page's flow, never over text. */
+.google-source-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  padding: 4px 0 14px;
+}
+.google-source-row p { margin: 0; flex: 1 1 200px; color: var(--muted); font-size: 14px; font-weight: 600; }
+.story-head .google-source-row { padding: 24px 0 0; }
+.google-source { display: inline-block; flex: none; border-radius: 10px; line-height: 0; }
+.google-source img { display: block; width: 180px; height: auto; }
+
 .side { display: grid; gap: 28px; align-content: start; }
 .side-box h3 { font-size: 15px; letter-spacing: 0.04em; margin: 0 0 8px; }
 .side-box p { margin: 0 0 12px; color: var(--muted); font-size: 14px; line-height: 1.55; }
