@@ -29,6 +29,7 @@ export function versionRecord(story, v, media = {}) {
       news: `https://news.edock.io/p/${story.slug}/`,
       blog: `https://blogs.edock.io/p/${story.slug}`,
     },
+    ...(v.reel ? { reel: v.reel } : {}),
     media,
     licence: 'CC-BY-4.0',
   };

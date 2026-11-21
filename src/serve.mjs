@@ -8,6 +8,7 @@
  */
 
 import { createServer } from 'node:http';
+import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,12 +27,13 @@ export const TYPES = {
   '.gif': 'image/gif',
   '.avif': 'image/avif',
   '.woff2': 'font/woff2',
+  '.mp4': 'video/mp4',
 };
 
 /** The headers the live site's CDN adds to every answer. */
 export function securityHeaders(api = 'https://api.edock.io') {
   return {
-    'Content-Security-Policy': `default-src 'none'; script-src 'self' ${CLARITY_SOURCES.script}; connect-src ${CLARITY_SOURCES.connect}; img-src 'self' ${CLARITY_SOURCES.img}; style-src 'self'; font-src 'self'; form-action 'self' ${new URL(api).origin}; base-uri 'none'; frame-ancestors 'none'`,
+    'Content-Security-Policy': `default-src 'none'; script-src 'self' ${CLARITY_SOURCES.script}; connect-src ${CLARITY_SOURCES.connect}; img-src 'self' ${CLARITY_SOURCES.img}; media-src 'self'; style-src 'self'; font-src 'self'; form-action 'self' ${new URL(api).origin}; base-uri 'none'; frame-ancestors 'none'`,
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -57,7 +59,22 @@ export function handler(root, api) {
   const headers = securityHeaders(api);
   return async (req, res) => {
     const send = async (status, file) => {
-      res.writeHead(status, { ...headers, 'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream' });
+      const type = { 'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream' };
+      // A video is read in pieces, as S3 and CloudFront serve it: Safari
+      // plays nothing from a server that cannot send a range.
+      const range = status === 200 ? /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '') : null;
+      if (range && (range[1] || range[2])) {
+        const size = (await stat(file)).size;
+        const start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
+        const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+        if (start > end || start >= size) {
+          res.writeHead(416, { ...headers, 'Content-Range': `bytes */${size}` });
+          return res.end();
+        }
+        res.writeHead(206, { ...headers, ...type, 'Accept-Ranges': 'bytes', 'Content-Range': `bytes ${start}-${end}/${size}` });
+        return createReadStream(file, { start, end }).pipe(res);
+      }
+      res.writeHead(status, { ...headers, ...type, ...(status === 200 ? { 'Accept-Ranges': 'bytes' } : {}) });
       res.end(await readFile(file));
     };
     const file = fileFor(root, req.url ?? '/');
