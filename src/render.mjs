@@ -83,9 +83,9 @@ export const PREFERRED_SOURCE_URL = `https://www.google.com/preferences/source?q
 
 const BADGE_SET = (look) => `/google/preferred-source-${look}.png 338w, /google/preferred-source-${look}@2x.png 676w`;
 
-/** The badge as a link; dark pages get Google's dark badge. */
+/** The badge as a link, in a new tab so the reader keeps the story; dark pages get Google's dark badge. */
 export function preferredSourceBadge() {
-  return `<a class="google-source" href="${PREFERRED_SOURCE_URL}">
+  return `<a class="google-source" href="${PREFERRED_SOURCE_URL}" target="_blank" rel="noopener">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="${BADGE_SET('dark')}" sizes="180px">
     <img src="/google/preferred-source-light.png" srcset="${BADGE_SET('light')}" sizes="180px" width="180" height="57" alt="Add Edock News as a preferred source on Google" decoding="async">
@@ -266,11 +266,11 @@ ${live.map((s, i) => storyRow(s, config, i === 0)).join('\n')}
   const body = `<h1 class="visually-hidden">Edock News</h1>
 <div class="home-grid">
   <section class="feed" aria-label="Latest stories">
-    <nav class="tabs" aria-label="Stories"><a class="tab tab-on" href="/" aria-current="page">Latest</a></nav>
     <div class="google-source-row">
       <p>See Edock News first in Google's Top Stories</p>
       ${preferredSourceBadge()}
     </div>
+    <nav class="tabs" aria-label="Stories"><a class="tab tab-on" href="/" aria-current="page">Latest</a></nav>
     ${list}
   </section>
   ${sidebar()}

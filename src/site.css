@@ -228,10 +228,10 @@ img.avatar { display: block; object-fit: cover; }
 /* Google's "preferred source" badge: its own picture, in the page's flow, never over text. */
 .google-source-row {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
-  padding: 14px 0; border-bottom: 1px solid var(--hairline);
+  padding: 4px 0 14px;
 }
 .google-source-row p { margin: 0; flex: 1 1 200px; color: var(--muted); font-size: 14px; font-weight: 600; }
-.story-head .google-source-row { padding: 16px 0 0; border-bottom: 0; }
+.story-head .google-source-row { padding: 24px 0 0; }
 .google-source { display: inline-block; flex: none; border-radius: 10px; line-height: 0; }
 .google-source img { display: block; width: 180px; height: auto; }
 

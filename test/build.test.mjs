@@ -73,13 +73,16 @@ describe('building the site from the record', () => {
   });
 
   it('links Google’s preferred-source badge to news.edock.io on the home page and every story, from this site’s own pictures', async () => {
-    const link = 'href="https://www.google.com/preferences/source?q=news.edock.io"';
+    const link = 'href="https://www.google.com/preferences/source?q=news.edock.io" target="_blank" rel="noopener"';
     for (const file of ['index.html', `p/${JIO}/index.html`]) {
       const html = await page(file);
       assert.equal(html.split(link).length - 1, 1, file);
       assert.match(html, /<source media="\(prefers-color-scheme: dark\)" srcset="\/google\/preferred-source-dark\.png 338w, \/google\/preferred-source-dark@2x\.png 676w"/);
       assert.match(html, /<img src="\/google\/preferred-source-light\.png" [^>]*alt="Add Edock News as a preferred source on Google"/);
     }
+    // At the top of the home page's list, above its tabs.
+    const home = await page('index.html');
+    assert.ok(home.indexOf(link) < home.indexOf('class="tabs"'));
     // Under the byline, above the story's picture, as in Google's own example.
     const story = await page(`p/${JIO}/index.html`);
     assert.ok(story.indexOf('class="record-bar"') < story.indexOf(link) && story.indexOf(link) < story.indexOf('class="story-body"'));
