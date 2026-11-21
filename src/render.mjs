@@ -8,7 +8,8 @@
  * stylesheet on this site, fonts from this site, pictures from this site's
  * copy of the archive, and a story's reel video from this site's checked
  * copy (src/reels.mjs). The policy below says so to the browser too, in the
- * page itself as well as in the server's headers.
+ * page itself as well as in the server's headers. Google's "preferred
+ * source" badge is a picture on this site and a plain link to Google.
  */
 
 import { cleanStoryHtml, escapeHtml, excerptOf } from './sanitize.mjs';
@@ -67,6 +68,30 @@ const WORDMARK = `<svg class="wordmark" viewBox="0 0 734 170" aria-hidden="true"
 const BLUE_TICK = `<svg class="tick" viewBox="0 0 24 24" role="img" aria-label="Blue tick"><path fill="#1D9BF0" d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484z"/><path fill="#fff" d="M10.54 16.2l-3.61-3.6 1.4-1.42 2.18 2.18 4.68-5.1 1.47 1.36z"/></svg>`;
 
 const PEN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`;
+
+/**
+ * Google's "preferred sources" badge (Arsh, 21 Nov 2026). It follows Google
+ * Search Central's "Help your readers find your site through preferred
+ * sources in Google Search", the deeplink way, because pages here run no
+ * script but Clarity: a plain link to Google's source preferences tool for
+ * this site, drawn with Google's own badge (its English light and dark
+ * pictures, kept on this site in /google/). A reader who picks Edock News
+ * there sees more of it in Google's Top Stories.
+ */
+export const PREFERRED_SOURCE_HOST = 'news.edock.io';
+export const PREFERRED_SOURCE_URL = `https://www.google.com/preferences/source?q=${PREFERRED_SOURCE_HOST}`;
+
+const BADGE_SET = (look) => `/google/preferred-source-${look}.png 338w, /google/preferred-source-${look}@2x.png 676w`;
+
+/** The badge as a link; dark pages get Google's dark badge. */
+export function preferredSourceBadge() {
+  return `<a class="google-source" href="${PREFERRED_SOURCE_URL}">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="${BADGE_SET('dark')}" sizes="180px">
+    <img src="/google/preferred-source-light.png" srcset="${BADGE_SET('light')}" sizes="180px" width="180" height="57" alt="Add Edock News as a preferred source on Google" decoding="async">
+  </picture>
+</a>`;
+}
 
 
 const jsonLd = (data) => JSON.stringify(data).replace(/</g, '\\u003c');
@@ -242,6 +267,10 @@ ${live.map((s, i) => storyRow(s, config, i === 0)).join('\n')}
 <div class="home-grid">
   <section class="feed" aria-label="Latest stories">
     <nav class="tabs" aria-label="Stories"><a class="tab tab-on" href="/" aria-current="page">Latest</a></nav>
+    <div class="google-source-row">
+      <p>See Edock News first in Google's Top Stories</p>
+      ${preferredSourceBadge()}
+    </div>
     ${list}
   </section>
   ${sidebar()}
@@ -276,6 +305,7 @@ export function storyPage(config, story) {
       <a href="/p/${record.slug}/history/">${versions > 1 ? `All ${versions} versions` : 'History'}</a>
       <a href="${recordLink(config, last)}">Public record</a>
     </div>
+    <div class="google-source-row">${preferredSourceBadge()}</div>
   </header>
   ${reelFigure(record, config) ?? (cover ? `<figure class="cover"><img src="${escapeHtml(cover)}" alt="" decoding="async"></figure>` : '')}
   <div class="story-body">

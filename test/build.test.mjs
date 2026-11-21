@@ -72,6 +72,34 @@ describe('building the site from the record', () => {
     assert.ok(!story.includes('noindex'));
   });
 
+  it('links Google’s preferred-source badge to news.edock.io on the home page and every story, from this site’s own pictures', async () => {
+    const link = 'href="https://www.google.com/preferences/source?q=news.edock.io"';
+    for (const file of ['index.html', `p/${JIO}/index.html`]) {
+      const html = await page(file);
+      assert.equal(html.split(link).length - 1, 1, file);
+      assert.match(html, /<source media="\(prefers-color-scheme: dark\)" srcset="\/google\/preferred-source-dark\.png 338w, \/google\/preferred-source-dark@2x\.png 676w"/);
+      assert.match(html, /<img src="\/google\/preferred-source-light\.png" [^>]*alt="Add Edock News as a preferred source on Google"/);
+    }
+    // Under the byline, above the story's picture, as in Google's own example.
+    const story = await page(`p/${JIO}/index.html`);
+    assert.ok(story.indexOf('class="record-bar"') < story.indexOf(link) && story.indexOf(link) < story.indexOf('class="story-body"'));
+    for (const file of ['about/index.html', `p/${JIO}/history/index.html`, `p/${JIO}/v/1/index.html`, '404.html']) {
+      assert.ok(!(await page(file)).includes('preferences/source'), file);
+    }
+    for (const look of ['light', 'dark']) {
+      for (const size of ['', '@2x']) {
+        const png = await readFile(path.join(out, `google/preferred-source-${look}${size}.png`));
+        assert.equal(png.subarray(1, 4).toString(), 'PNG');
+      }
+    }
+  });
+
+  it('keeps the badge pointed at news.edock.io in a build for another address', async () => {
+    const into = await fresh();
+    await build({ archive, out: into, origin: 'http://127.0.0.1:4173/' });
+    assert.match(await readFile(path.join(into, 'index.html'), 'utf8'), /preferences\/source\?q=news\.edock\.io"/);
+  });
+
   it('shows the full history, and what changed in each version', async () => {
     const history = await page(`p/${JIO}/history/index.html`);
     assert.match(history, /First version/);
