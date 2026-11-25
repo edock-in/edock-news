@@ -56,5 +56,5 @@ export function newsSitemap(config, stories, now) {
 }
 
 export function robotsTxt(config) {
-  return `User-agent: *\nAllow: /\nDisallow: /report/\n\nSitemap: ${config.origin}/sitemap.xml\nSitemap: ${config.origin}/news-sitemap.xml\n`;
+  return `User-agent: *\nAllow: /\nDisallow: /report/\nDisallow: /p/*/history/\nDisallow: /p/*/v/\nDisallow: /p/*/report/\n\nSitemap: ${config.origin}/sitemap.xml\nSitemap: ${config.origin}/news-sitemap.xml\n`;
 }
