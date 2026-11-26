@@ -1,6 +1,12 @@
 # Contributing to Edock News
 
-Thank you for helping. A few rules keep news.edock.io safe and honest.
+**Edock News closed on 26 November 2026, and this code no longer runs.**
+news.edock.io now forwards each story to the same story on
+[Edock Blogs](https://blogs.edock.io). The code stays here as it was, and the
+[public record](https://github.com/edock-in/edock-news-archive) stays public.
+
+Pull requests are no longer merged. The rules below are kept as a record of
+how the site was built.
 
 ## The rules
 
