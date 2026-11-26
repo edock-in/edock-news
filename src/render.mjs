@@ -318,7 +318,7 @@ ${cleanStoryHtml(record.content_html, record.media, config.mediaBase)}
   </div>
   ${record.tags?.length ? `<p class="tags">${record.tags.map((t) => `<span class="chip">${escapeHtml(t)}</span>`).join(' ')}</p>` : ''}
   <aside class="story-actions" aria-label="About this story">
-    <a class="pill" href="https://blogs.edock.io/p/${record.slug}">Clap and comment on Edock Blogs</a>
+    <a class="pill" href="https://blogs.edock.io/p/${record.slug}">Heart and comment on Edock Blogs</a>
     <a class="pill pill-outline" href="/p/${record.slug}/report/">Report this story</a>
   </aside>
   <p class="licence">You may republish this story under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>: credit ${escapeHtml(record.author.name)} and link to this page.</p>

@@ -68,7 +68,7 @@ describe('building the site from the record', () => {
     assert.match(story, /https:\/\/github.com\/edock-in\/edock-news-archive\/blob\/main\/stories\/a1b2c3d4-0000-4000-8000-000000000001\/v2.json/);
     assert.match(story, /<script type="application\/ld\+json">\{"@context":"https:\/\/schema.org","@type":"NewsArticle"/);
     assert.match(story, /<meta property="og:image" content="https:\/\/news.edock.io\/media\//);
-    assert.match(story, /href="https:\/\/blogs.edock.io\/p\/jio-ipo-opens-21-october"/);
+    assert.match(story, /href="https:\/\/blogs.edock.io\/p\/jio-ipo-opens-21-october">Heart and comment on Edock Blogs<\/a>/);
     assert.ok(!story.includes('noindex'));
     assert.match(story, /<meta name="robots" content="max-image-preview:large">/);
     assert.match(story, /<link rel="canonical" href="https:\/\/news.edock.io\/p\/jio-ipo-opens-21-october\/">/);
