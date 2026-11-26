@@ -1,7 +1,12 @@
 # Edock News
 
-The code behind [news.edock.io](https://news.edock.io): business news from the
-Edock community, where every story and every edit stays on a public record that
+**Edock News closed on 26 November 2026, and this code no longer runs.**
+news.edock.io now forwards each story to the same story on
+[Edock Blogs](https://blogs.edock.io). The code stays here as it was, and the
+[public record](https://github.com/edock-in/edock-news-archive) stays public.
+
+This was the code behind news.edock.io: business news from the Edock
+community, where every story and every edit stayed on a public record that
 anyone can check.
 
 ## How it works
